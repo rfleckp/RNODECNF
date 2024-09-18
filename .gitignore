@@ -1,0 +1,14 @@
+.venv
+venv
+env/
+.DS_Store
+__pycache__
+mnist
+checkerboard
+normal
+gaussians
+moons
+spirals 
+data
+rec_run_job.out
+run.job
