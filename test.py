@@ -138,7 +138,7 @@ def setup_model_and_data(dataset: str, seed: int=10, toy_samples: int=2000):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     if dataset == "mnist":
-        batch_size = 64
+        batch_size = 128
         y = mnist_test_loader(batch_size=batch_size)
         x = torch.randn((len(y), batch_size, 1, 28, 28))
         odefunc = UNet().to(device)
