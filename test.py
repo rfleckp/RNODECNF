@@ -163,6 +163,8 @@ def evaluate_model(path, x, y, odefunc, dataset):
             x_batched = x[c].to(device)
             y_batched = y_batched.to(device)
             c += 1
+            if x_batched.shape[0] != y_batched.shape[0]:
+                x_batched = x_batched[:y_batched.shape[0]]
 
             flow, energy, fe = normalized_path_energy(odefunc, x_batched, dataset)
             path_energy += energy
@@ -173,10 +175,7 @@ def evaluate_model(path, x, y, odefunc, dataset):
             if dataset=='mnist':
                 neg_log = (neg_log/784+np.log(256)) / (np.log(2))
             nll += neg_log
-            if flow[-1].shape[0] != y_batched.shape[0]:
-                w2d += wasserstein2(flow[-1][:y_batched.shape[0]], y_batched)
-            else: 
-                w2d += wasserstein2(flow[-1], y_batched)
+            w2d += wasserstein2(flow[-1], y_batched)
 
     del odefunc
     return [[nll/c, length/c, w2d/c, path_energy/c, nfe/c]]
