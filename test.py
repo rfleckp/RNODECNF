@@ -12,10 +12,12 @@ def flow_length(flow):
     diff = flow[1:] - flow[:-1]
     if diff.dim() == 3:
         dist = torch.linalg.norm(diff, dim=-1)
+        straight = torch.linalg.norm(flow[-1]-flow[0], dim=1)
     else:
         dist = torch.linalg.norm(diff, dim=(-2,-1)).squeeze()
+        straight = torch.linalg.norm(flow[-1]-flow[0], dim=(-2,-1)).squeeze()
     trajectory_length = dist.sum(dim=0)
-    return torch.mean(trajectory_length-torch.linalg.norm(flow[-1]-flow[0], dim=1))
+    return torch.mean(trajectory_length-straight)
 
 
 def flow_straightness(odefunc, flow):

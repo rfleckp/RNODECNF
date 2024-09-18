@@ -12,4 +12,7 @@ spirals
 data
 rec_run_job.out
 run.job
+run.job2
+rnode.out
+otcfm.out
 combine_plots.py
