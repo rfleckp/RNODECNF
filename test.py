@@ -165,7 +165,8 @@ def evaluate_model(path, x, y, odefunc, dataset):
             c += 1
             if x_batched.shape[0] != y_batched.shape[0]:
                 x_batched = x_batched[:y_batched.shape[0]]
-
+                print("algo ha hecho")
+            print(c)
             flow, energy, fe = normalized_path_energy(odefunc, x_batched, dataset)
             path_energy += energy
             nfe += fe
@@ -176,7 +177,7 @@ def evaluate_model(path, x, y, odefunc, dataset):
                 neg_log = (neg_log/784+np.log(256)) / (np.log(2))
             nll += neg_log
             w2d += wasserstein2(flow[-1], y_batched)
-
+    print("debe ser al guardarlo")
     del odefunc
     return [[nll/c, length/c, w2d/c, path_energy/c, nfe/c]]
 

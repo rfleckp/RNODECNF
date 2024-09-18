@@ -12,3 +12,4 @@ spirals
 data
 rec_run_job.out
 run.job
+combine_plots.py

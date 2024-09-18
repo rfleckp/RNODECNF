@@ -54,7 +54,7 @@ def toy_density_estimation1(model_path:str, seed:int = 3, samples:int =20000):
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density1'))
-        #plt.cla()
+        plt.cla()
 
 
 import seaborn as sns
