@@ -43,7 +43,7 @@ def normal_logprob(z):
 def compute_bits_per_dim(z, log_det):
     logpz = standard_normal_logprob(z).view(z.shape[0], -1).sum(1, keepdim=True)  
     #logpz = normal_logprob(z)
-    logpx = logpz - log_det
+    logpx = logpz + log_det
 
     logpx_per_dim = torch.sum(logpx) / z.nelement()  # averaged over batches
     return -logpx_per_dim
