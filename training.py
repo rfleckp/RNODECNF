@@ -221,16 +221,15 @@ def train_mnist_node(params):
 
             loss.backward()
             optimizer.step()
-
             epoch_loss += loss
             num += 1
 
-        if epoch%10==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
-            data = [[epoch, epoch_loss/num, elapsed_time]]
+            data = [[i, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
     del x0, t, z_t, log_det, loss    
 
