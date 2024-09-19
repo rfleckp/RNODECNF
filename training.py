@@ -184,7 +184,6 @@ def train_mnist_node(params):
     model = UNet().to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    initial_distr = torch.distributions.MultivariateNormal(torch.zeros(784).to(device), torch.eye(784).to(device))
     train_loader = mnist_train_loader(params["batch_size"])
 
     path = "mnist/node"
@@ -217,7 +216,7 @@ def train_mnist_node(params):
             
             z1, l1 = z_t[-1].reshape((z_t[-1].shape[0],-1)), log_det[-1]
 
-            logp_x = initial_distr.log_prob(z1) + l1
+            logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1
             loss = -logp_x.mean()
 
             loss.backward()
@@ -235,7 +234,7 @@ def train_mnist_node(params):
 
     del x0, t, z_t, log_det, loss    
 
-
+from plots import generate_grid
 def train_mnist_rnode(params):
 
     torch.manual_seed(params['seed'])
@@ -257,7 +256,7 @@ def train_mnist_rnode(params):
     initial_distr = torch.distributions.MultivariateNormal(torch.zeros(784).to(device), torch.eye(784).to(device))
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode2"
+    path = "mnist/rnode"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -297,13 +296,13 @@ def train_mnist_rnode(params):
             epoch_loss += loss
             num += 1
 
-        torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
-        elapsed_time = format_elapsed_time(time.time()-start)
-        data = [[epoch, epoch_loss/num, elapsed_time]]
-        save_logs(path, data, train=True, params=params, first_write=first)
-        first = False
-
-        if epoch%10==0:
+            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
+            elapsed_time = format_elapsed_time(time.time()-start)
+            data = [[epoch, epoch_loss/num, elapsed_time]]
+            save_logs(path, data, train=True, params=params, first_write=first)
+            first = False
+        generate_grid(os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
+        if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]
@@ -351,7 +350,7 @@ def train_mnist_cfm(params):
             epoch_loss += loss
             num += 1
         
-        if epoch%10==0:
+        if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]

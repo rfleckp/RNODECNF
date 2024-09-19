@@ -60,9 +60,8 @@ class NODE(nn.Module):
             normal = torch.distributions.MultivariateNormal(torch.zeros(2).to(device), torch.eye(2).to(device))
             logp_x = normal.log_prob(x_t[-1]) + log_det_t[-1]
         else:
-            normal = torch.distributions.MultivariateNormal(torch.zeros(784).to(device), torch.eye(784).to(device))
             x_1 = x_t[-1].reshape((x_t[-1].shape[0],-1))
-            logp_x = normal.log_prob(x_1) + log_det_t[-1]
+            logp_x = -1*0.5*torch.sum(x_1**2,dim=1,keepdim=True) + log_det_t[-1]
 
         return logp_x.mean()
         
