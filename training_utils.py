@@ -70,7 +70,7 @@ class reg_aug_toy(nn.Module):
             epsilon = torch.randn_like(z).to(device)
             dlog_det_dt, dn_dt = divergence_approx(dz_dt, z, e=epsilon.unsqueeze(0))
             dE_dt = (torch.linalg.vector_norm(dz_dt, dim=1, keepdims=True)**2)                          #log-det of the Jacobian   
-
+            print(dz_dt.shape, dlog_det_dt.unsqueeze(1).shape, dE_dt.shape, dn_dt.unsqueeze(1).shape)
             return (dz_dt, dlog_det_dt.unsqueeze(1), dE_dt, dn_dt.unsqueeze(1))
 
 

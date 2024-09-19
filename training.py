@@ -257,7 +257,7 @@ def train_mnist_rnode(params):
     initial_distr = torch.distributions.MultivariateNormal(torch.zeros(784).to(device), torch.eye(784).to(device))
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode"
+    path = "mnist/rnode2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -288,7 +288,7 @@ def train_mnist_rnode(params):
 
             z1, l1, kin_E1, n1 = z_t[-1].reshape((z_t[-1].shape[0],-1)), log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
             #print(z1.shape, initial_distr.log_prob(z1).shape, l1.shape, kin_E1.shape, n1.shape)
-            logp_x = initial_distr.log_prob(z1) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
+            logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
             #-1*0.5*torch.sum(z1.reshape(128,-1)**2,dim=1,keepdim=True)
             loss = -logp_x.mean()/784
 
@@ -296,6 +296,13 @@ def train_mnist_rnode(params):
             optimizer.step()
             epoch_loss += loss
             num += 1
+
+        torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
+        elapsed_time = format_elapsed_time(time.time()-start)
+        data = [[epoch, epoch_loss/num, elapsed_time]]
+        save_logs(path, data, train=True, params=params, first_write=first)
+        first = False
+
         if epoch%10==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
@@ -428,3 +435,4 @@ def train_model(dataset, training,
             train_toy_cfm(dataset, params)
 
 
+train_model('mnist', 'rnode')
