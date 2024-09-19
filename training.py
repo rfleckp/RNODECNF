@@ -4,7 +4,7 @@ import time
 import numpy as np
 import torch.optim as optim
 from torchdiffeq import odeint_adjoint as odeint
-from training_utils import ExactOptimalTransportConditionalFlowMatcher, aug_ode, reg_aug_mnist, reg_aug_toy, choose_timesteps
+from training_utils import ExactOptimalTransportConditionalFlowMatcher, aug_ode, reg_aug_mnist, reg_aug_toy, choose_timesteps, compute_bits_per_dim
 from test import save_logs, format_elapsed_time, progress_bar
 from data import sampler, mnist_train_loader
 from models import MLP, UNet
@@ -186,7 +186,7 @@ def train_mnist_node(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/node"
+    path = "mnist/node2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
@@ -214,11 +214,9 @@ def train_mnist_node(params):
                                             rtol=1e-5, 
                                             atol=1e-5,)
             
-            z1, l1 = z_t[-1].reshape((z_t[-1].shape[0],-1)), log_det[-1]
+            z1, l1 = z_t[-1], log_det[-1]
 
-            logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1
-            loss = -logp_x.mean()
-
+            loss = compute_bits_per_dim(z1, l1)
             loss.backward()
             optimizer.step()
             epoch_loss += loss
@@ -241,20 +239,19 @@ def train_mnist_rnode(params):
     model = UNet().to(device)
     first = True
 
-    try:
+    """try:
         model.load_state_dict(torch.load('mnist/rnode/models/100_model.pt', map_location=device))
         print('loaded model 100')
         starting_epoch = 100
         first = False
     except:
         print("start training from scratch")
-        starting_epoch = 0
+        starting_epoch = 0"""
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    initial_distr = torch.distributions.MultivariateNormal(torch.zeros(784).to(device), torch.eye(784).to(device))
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode"
+    path = "mnist/rnode2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -294,18 +291,18 @@ def train_mnist_rnode(params):
             epoch_loss += loss
             num += 1
 
-            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
+            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
-        generate_grid(os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
-        if epoch%5==0:
-            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch+starting_epoch}_model.pt"))
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
+        """if epoch%5==0:
+            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
-            first = False
+            first = False"""
 
     del x0, t, z_t, log_det, E_t, n_t, loss    
 
@@ -430,3 +427,5 @@ def train_model(dataset, training,
             params["sigma"] = sigma
             params["optimal_transport"] = ot
             train_toy_cfm(dataset, params)
+
+train_model('mnist', 'node')

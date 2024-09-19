@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import math
 
 #chooses appropriate timesteps for numerical ODE solver
 def choose_timesteps(method: str):
@@ -31,6 +32,19 @@ def divergence_approx(f, y, e=None):
     N = torch.cat(sqnorms, dim=1).mean(dim=1)
 
     return approx_tr_dzdx, N
+
+def standard_normal_logprob(z):
+    logZ = -0.5 * math.log(2 * math.pi)
+    return logZ - z.pow(2) / 2
+
+def compute_bits_per_dim(z, log_det):
+    logpz = standard_normal_logprob(z).view(z.shape[0], -1).sum(1, keepdim=True)  
+    logpx = logpz - log_det
+
+    logpx_per_dim = torch.sum(logpx) / z.nelement()  # averaged over batches
+    bits_per_dim = -(logpx_per_dim - np.log(256)) / np.log(2)
+
+    return bits_per_dim
 
 #Augmented ODE's
 
@@ -70,7 +84,7 @@ class reg_aug_toy(nn.Module):
             epsilon = torch.randn_like(z).to(device)
             dlog_det_dt, dn_dt = divergence_approx(dz_dt, z, e=epsilon.unsqueeze(0))
             dE_dt = (torch.linalg.vector_norm(dz_dt, dim=1, keepdims=True)**2)                          #log-det of the Jacobian   
-            print(dz_dt.shape, dlog_det_dt.unsqueeze(1).shape, dE_dt.shape, dn_dt.unsqueeze(1).shape)
+
             return (dz_dt, dlog_det_dt.unsqueeze(1), dE_dt, dn_dt.unsqueeze(1))
 
 
@@ -89,8 +103,9 @@ class reg_aug_mnist(nn.Module):
             dz_dt = self.odefunc(t.to(device), z)
             epsilon = torch.randn_like(z).to(device)
             dlog_det_dt, dn_dt = divergence_approx(dz_dt, z, e=epsilon.unsqueeze(0))
-            dE_dt = (torch.linalg.matrix_norm(dz_dt))**2
-            
+            #dE_dt = (torch.linalg.matrix_norm(dz_dt))**2
+            #print(dz_dt.shape, dlog_det_dt.unsqueeze(1).shape, dE_dt.shape, dn_dt.unsqueeze(1).shape)
+            dE_dt = (torch.linalg.vector_norm(dz_dt.reshape(dz_dt.shape[0], -1), dim=1, keepdims=True)**2)
             return (dz_dt, dlog_det_dt.unsqueeze(1), dE_dt, dn_dt.unsqueeze(1))
         
 

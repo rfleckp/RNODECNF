@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint_adjoint as odeint
-from training_utils import choose_timesteps, aug_ode
+from training_utils import choose_timesteps, aug_ode, compute_bits_per_dim
 
 
 class MLP(nn.Module):
@@ -59,11 +59,11 @@ class NODE(nn.Module):
         if x.dim() == 2:
             normal = torch.distributions.MultivariateNormal(torch.zeros(2).to(device), torch.eye(2).to(device))
             logp_x = normal.log_prob(x_t[-1]) + log_det_t[-1]
+            return logp_x.mean()
         else:
-            x_1 = x_t[-1].reshape((x_t[-1].shape[0],-1))
-            logp_x = -1*0.5*torch.sum(x_1**2,dim=1,keepdim=True) + log_det_t[-1]
+            logp_x = compute_bits_per_dim(x_t[-1], log_det_t[-1])
+            return logp_x
 
-        return logp_x.mean()
         
 
 #!/usr/bin/env python
