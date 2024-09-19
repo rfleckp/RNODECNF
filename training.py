@@ -126,7 +126,6 @@ def train_toy_rnode(target, params):
             #print(f"\nbatch {i}, Loss: {batch_loss}\n")
             batch_loss = 0
 
-
 def train_toy_cfm(target, params):
 
     torch.manual_seed(params['seed'])
@@ -176,6 +175,7 @@ def train_toy_cfm(target, params):
             first = False
             batch_loss = 0
 
+from plots import generate_grid
 def train_mnist_node(params):
     
     torch.manual_seed(params['seed'])
@@ -233,7 +233,6 @@ def train_mnist_node(params):
 
     del x0, t, z_t, log_det, loss    
 
-from plots import generate_grid
 def train_mnist_rnode(params):
 
     torch.manual_seed(params['seed'])
@@ -431,6 +430,3 @@ def train_model(dataset, training,
             params["sigma"] = sigma
             params["optimal_transport"] = ot
             train_toy_cfm(dataset, params)
-
-
-train_model('mnist', 'rnode')

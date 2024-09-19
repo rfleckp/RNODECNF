@@ -10,10 +10,10 @@ gaussians
 moons
 spirals 
 data
-rec_run_job.out
 run.job
 run.job2
 run.job3
+rec_run_job.out
 rnode.out
 otcfm.out
 node.out
