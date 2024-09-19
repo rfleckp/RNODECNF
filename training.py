@@ -280,11 +280,16 @@ def train_mnist_rnode(params):
                                             rtol=1e-5, 
                                             atol=1e-5,)
 
-            z1, l1, kin_E1, n1 = z_t[-1].reshape((z_t[-1].shape[0],-1)), log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
+            z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
             #print(z1.shape, initial_distr.log_prob(z1).shape, l1.shape, kin_E1.shape, n1.shape)
-            logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
+            #logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
+            #print(z1.shape, l1.shape, kin_E1.shape, n1.shape)
+            logp_x = compute_bits_per_dim(z1, l1)
+            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).mean()/784
+            #print(logp_x, regularization, kin_E1.mean(), n1.mean())
             #-1*0.5*torch.sum(z1.reshape(128,-1)**2,dim=1,keepdim=True)
-            loss = -logp_x.mean()/784
+            loss = logp_x + regularization
+            print(loss)
 
             loss.backward()
             optimizer.step()
@@ -427,5 +432,3 @@ def train_model(dataset, training,
             params["sigma"] = sigma
             params["optimal_transport"] = ot
             train_toy_cfm(dataset, params)
-
-train_model('mnist', 'node')

@@ -172,9 +172,7 @@ def evaluate_model(path, x, y, odefunc, dataset):
             nfe += fe
             length += flow_length(flow)
             #straight += flow_straightness(odefunc, flow)
-            neg_log = -cont_NF.log_likelihood(y_batched, 5)
-            if dataset=='mnist':
-                neg_log = (neg_log/784+np.log(256)) / (np.log(2))
+            neg_log = cont_NF.log_likelihood(y_batched, 5)
             nll += neg_log
             w2d += wasserstein2(flow[-1], y_batched)
     del odefunc

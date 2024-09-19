@@ -59,7 +59,7 @@ class NODE(nn.Module):
         if x.dim() == 2:
             normal = torch.distributions.MultivariateNormal(torch.zeros(2).to(device), torch.eye(2).to(device))
             logp_x = normal.log_prob(x_t[-1]) + log_det_t[-1]
-            return logp_x.mean()
+            return -logp_x.mean()
         else:
             logp_x = compute_bits_per_dim(x_t[-1], log_det_t[-1])
             return logp_x
