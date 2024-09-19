@@ -186,7 +186,7 @@ def train_mnist_node(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/node3"
+    path = "mnist/node4"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
