@@ -27,6 +27,7 @@ def main():
 
     parser.add_argument("--only-test", default = False, type=bool)
     args = parser.parse_args()
+    print('args parsed')
 
     ot = False
     if args.training_method=='otcfm':
