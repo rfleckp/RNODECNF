@@ -121,7 +121,7 @@ def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
             lc = LineCollection(segments, cmap=cmap, norm=norm, linewidth=.1, zorder=1)
             lc.set_array(t[:-1].numpy())
             ax.add_collection(lc)
-        ax.set_facecolor('black')
+        #ax.set_facecolor('black')
         ax.scatter(flow[0, :, 0], flow[0, :, 1], color=last_color, s=.5, label="base", zorder=0)
         ax.scatter(flow[-1, :, 0], flow[-1, :, 1], color=first_color, s=.5, label="target", zorder=2)
 

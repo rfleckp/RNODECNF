@@ -69,8 +69,8 @@ def normalized_path_energy(odefunc, x, dataset):
     flow, energy = odeint(augmented_dynamics, initial_values, 
                           t=torch.linspace(1,0,100).to(device), 
                           method='dopri5',
-                          atol=1e5,
-                          rtol=1e5)
+                          atol=1e-4,
+                          rtol=1e-4)
     w2d = wasserstein2(flow[0],flow[-1])**2
     E = torch.abs(energy[-1].mean())
     
