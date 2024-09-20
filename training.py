@@ -185,11 +185,11 @@ def train_mnist_node(params):
     model = UNet().to(device)
 
     #optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/node2"
+    path = "mnist/node1"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
@@ -199,9 +199,6 @@ def train_mnist_node(params):
     for epoch in range(1, params['n_epochs']+1):
         epoch_loss = 0.0
         progress_bar = enumerate(train_loader)
-        """new_lr = params['learning_rate'] * (0.5 ** (epoch-1))  
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = new_lr"""
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
