@@ -102,9 +102,9 @@ def save_logs(path, data, train, first_write=False, params=None):
     else:
         file_path = path + "/logs/test.txt"
         if "mnist" in file_path:
-            headers = ["    epoch   ", "n_logl", "straight", "w2dist", "energy", "nfe"]
+            headers = ["    epoch   ", "n_logl", "w2dist", "energy", "straight", "nfe"]
         else:
-            headers = ["    batch   ", "n_logl", "straight", "w2dist", "energy", "nfe"]      
+            headers = ["    batch   ", "n_logl", "w2dist", "energy", "straight", "nfe"]      
 
     table = tabulate(data, tablefmt="grid", floatfmt=".3f") 
     mode = "w" if first_write else "a"  
@@ -176,7 +176,7 @@ def evaluate_model(path, x, y, odefunc, dataset):
             nll += neg_log
             w2d += wasserstein2(flow[-1], y_batched)
     del odefunc
-    return [[nll/c, length/c, w2d/c, path_energy/c, nfe/c]]
+    return [[nll/c, w2d/c, path_energy/c, length/c, nfe/c]]
 
 #prints a progress bar
 def progress_bar(i, total, time, est_time):

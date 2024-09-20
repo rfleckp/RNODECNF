@@ -53,8 +53,8 @@ class NODE(nn.Module):
         with torch.no_grad():
             x_t, log_det_t = odeint(aug_dynamics, initial_values, t,
                                     method = odeint_method,
-                                    atol=1e-3,
-                                    rtol=1e-3,)
+                                    atol=1e-4,
+                                    rtol=1e-4,)
             
         if x.dim() == 2:
             normal = torch.distributions.MultivariateNormal(torch.zeros(2).to(device), torch.eye(2).to(device))
