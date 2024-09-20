@@ -54,7 +54,7 @@ def toy_density_estimation1(model_path:str, seed:int = 3, samples:int =20000):
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density1'))
-        plt.cla()
+        plt.close()
 
 
 import seaborn as sns
@@ -89,7 +89,7 @@ def toy_density_estimation2(model_path: str, seed: int=3, steps: int=4, samples:
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density2'))
-        plt.cla()
+        plt.close()
 
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
@@ -133,7 +133,7 @@ def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
     ax.set_yticks([])
 
     plt.savefig(os.path.join(directory, f'{dataset}_flow1'))
-    plt.clf()
+    plt.close()
 
 
 def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
@@ -166,7 +166,7 @@ def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
     ax.set_yticks([])
 
     plt.savefig(os.path.join(directory, f'{dataset}_flow2'))
-    plt.clf()
+    plt.close()
 
 
 #MNIST PLOTS
@@ -198,7 +198,7 @@ def generate_grid(model_path: str, seed: int=4):
 
     plt.tight_layout()
     plt.savefig(os.path.join(directory, f'{dataset}_grid{name.split('_')[0]}'))
-    plt.cla()
+    plt.close()
 
 
 def plot_mnist_flow(model_path: str, seed: int=4):
@@ -226,7 +226,7 @@ def plot_mnist_flow(model_path: str, seed: int=4):
 
     plt.tight_layout()
     plt.savefig(os.path.join(directory, f'{dataset}_flow{name.split('_')[0]}'))
-    plt.cla()
+    plt.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

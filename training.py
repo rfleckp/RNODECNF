@@ -196,7 +196,7 @@ def train_mnist_node(params):
     for epoch in range(1, params['n_epochs']+1):
         epoch_loss = 0.0
         progress_bar = enumerate(train_loader)
-        new_lr = params['learning_rate'] * (0.9 ** epoch)  
+        new_lr = params['learning_rate'] * (0.5 ** (epoch-1))  
         for param_group in optimizer.param_groups:
             param_group['lr'] = new_lr
         num = 0

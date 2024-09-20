@@ -46,7 +46,7 @@ def compute_bits_per_dim(z, log_det):
     logpx = logpz + log_det
 
     logpx_per_dim = torch.sum(logpx) / z.nelement()  # averaged over batches
-    #return -logpx_per_dim
+    return -logpx_per_dim
     bits_per_dim = -(logpx_per_dim - np.log(256)) / np.log(2)
 
     return bits_per_dim
