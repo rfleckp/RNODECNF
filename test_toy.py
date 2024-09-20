@@ -4,7 +4,7 @@ def run_experiment(dataset):
     cmd = [
         "python", "main.py", 
         "--dataset", dataset,
-        "--only-test"
+        "--only-test", "True"
     ]
     
     print(f"Running: {cmd}")
