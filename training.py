@@ -184,10 +184,12 @@ def train_mnist_node(params):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = UNet().to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
+    #optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
+    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/node2"
+    path = "mnist/node1"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
@@ -219,15 +221,12 @@ def train_mnist_node(params):
                                             atol=1e-5,)
             
             z1, l1 = z_t[-1], log_det[-1]
-            #plt.imshow(z1[0,0].detach().numpy())
-            #plt.imshow(standard_normal_logprob(z1)[0,0].detach().numpy())
-            #plt.show()
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
             logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True)  
-            #print('logrpob and divergence: ', logpz, l1)
-            logpx = logpz/784 + l1
-            loss = - torch.mean(logpx) 
+            #print('logrpob and divergence: ', logpz.mean(), l1.mean())
+            logpx = logpz + l1
+            loss = - torch.sum(logpx) / z1.nelement() 
             #print(loss)
 
             #loss = compute_bits_per_dim(z1, l1)
@@ -244,6 +243,7 @@ def train_mnist_node(params):
             if i % 50 == 0:
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
+        scheduler.step()
 
     del x0, t, z_t, log_det, loss    
 
