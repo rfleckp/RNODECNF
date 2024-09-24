@@ -139,7 +139,7 @@ def train_toy_cfm(target, params):
 
     if params["optimal_transport"]:
         FM = ExactOptimalTransportConditionalFlowMatcher(sigma=params['sigma'])
-        path = target + "/otcfm{params['sigma']}"
+        path = target + f"/otcfm{params['sigma']}"
     else:
         FM = ExactOptimalTransportConditionalFlowMatcher(sigma=params['sigma'], optimal_transport=False)
         path = target + "/cfm"
