@@ -452,4 +452,4 @@ def train_model(dataset, training,
             params["optimal_transport"] = ot
             train_toy_cfm(dataset, params)
 
-train_model('mnist', 'rnode')
+#train_model('mnist', 'rnode')

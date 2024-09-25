@@ -9,7 +9,6 @@ def main():
     dataset: ['mnist', 'moons', 'gaussians', 'spirals']
     training method: ['cfm', 'rnode', 'node']
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--training-method", default="cfm",
                         choices=["rnode", "otcfm", "cfm", "node"])
@@ -27,7 +26,7 @@ def main():
 
     parser.add_argument("--only-test", default = False, type=bool)
     args = parser.parse_args()
-    print('args parsed')
+    #print('args parsed')
 
     ot = False
     if args.training_method=='otcfm':
