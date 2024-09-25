@@ -264,7 +264,7 @@ def train_mnist_rnode(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode2"
+    path = "mnist/rnode"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -294,15 +294,17 @@ def train_mnist_rnode(params):
                                             atol=1e-5,)
 
             z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
             #print(z1.shape, initial_distr.log_prob(z1).shape, l1.shape, kin_E1.shape, n1.shape)
             #logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
-            #print(z1.shape, l1.shape, kin_E1.shape, n1.shape)
-            logp_x = compute_bits_per_dim(z1, l1)
-            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).mean()/784
+            #print(logpz.shape, l1.shape, kin_E1.shape, n1.shape)
+            #logp_x = compute_bits_per_dim(z1, l1)
+            #regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).mean()/784
             #print(logp_x, regularization, kin_E1.mean(), n1.mean())
             #-1*0.5*torch.sum(z1.reshape(128,-1)**2,dim=1,keepdim=True)
-            loss = logp_x + regularization
-            print(loss)
+            #loss = logp_x + regularization
+            loss = (-(logpz + log_det) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            #print(loss)
 
             loss.backward()
             optimizer.step()
@@ -314,6 +316,8 @@ def train_mnist_rnode(params):
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
+            if i % 50 == 0:
+                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
@@ -446,4 +450,4 @@ def train_model(dataset, training,
             params["optimal_transport"] = ot
             train_toy_cfm(dataset, params)
 
-#train_model('mnist', 'node')
+train_model('mnist', 'rnode')
