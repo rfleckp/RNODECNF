@@ -8,7 +8,7 @@ def run_experiment(training_method, dataset, sigma):
         "--learning-rate", '1e-3',
         "--n-batches", '100_000',
         "--regularization", '.1',
-        "--sigma", f'{sigma}'
+        "--sigma", sigma
     ]
     
     print(f"Running: {cmd}")
