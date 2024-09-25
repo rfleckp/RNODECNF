@@ -18,8 +18,10 @@ class MLP(nn.Module):
             torch.nn.SELU(),
             torch.nn.Linear(hidden_dim, out_dim),
         )
+        self.nfe = 0
 
     def forward(self, t, x):
+        self.nfe += 1
         if t.dim()==0:
             t = t.expand(x.size(0),)
         x = torch.cat((x, t[:,None]),dim=-1) 
@@ -31,13 +33,12 @@ class NODE(nn.Module):
         super().__init__()
         self.odefunc = ode_func
 
-    def forward(self, x, traj=False, t=torch.linspace(1, 0, 2).type(torch.float32)):
+    def forward(self, x, traj=False, t=torch.linspace(1, 0, 2).type(torch.float32) ,odeint_method='dopri5'):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         flow = odeint(self.odefunc, x.to(device), t.to(device), 
-                              method="dopri5",        
-                              atol=1e-5,
-                              rtol=1e-5,)
-        
+                              method=odeint_method,        
+                              atol=1e-10,
+                              rtol=1e-10,)
         if traj:
             return flow
         else:

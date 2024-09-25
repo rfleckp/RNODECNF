@@ -96,7 +96,6 @@ def toy_density_estimation2(model_path: str, seed: int=3, steps: int=4, samples:
         plt.savefig(os.path.join(directory, f'{dataset}_density2'))
         plt.close()
 
-toy_density_estimation1('moons/rnode/models/100000_model.pt')
 
 def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

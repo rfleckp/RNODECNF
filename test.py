@@ -237,3 +237,69 @@ def evaluate_dataset(dataset):
         directory = os.path.join(dataset, i, 'models')
         evaluate_models(directory)
 
+def error(model_path, x, y, odefunc, steps):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    odefunc.load_state_dict(torch.load(model_path, map_location=device))
+    odefunc.eval()
+
+    cont_NF = NODE(odefunc).to(device)
+    t = torch.linspace(1, 0, steps+1).type(torch.float32)
+    c, err, nfe = 0, 0, 0
+    with torch.no_grad():
+        for y_batched, _ in y:
+            x_batched = x[c].to(device)
+            y_batched = y_batched.to(device)
+            c += 1
+            if x_batched.shape[0] != y_batched.shape[0]:
+                x_batched = x_batched[:y_batched.shape[0]]
+                
+            y_dp = cont_NF(x_batched, t=t)
+            nfe += odefunc.nfe
+            odefunc.nfe = 0
+            y_rk = cont_NF(x_batched, t=t, odeint_method='rk4')     
+            error = torch.abs(y_dp - y_rk)
+            err += torch.mean(error)
+
+
+    return [[err/c, nfe/c]]
+
+def save_error(path, data, step, first_write=False):
+    os.makedirs(path + "/logs", exist_ok=True)
+    file_path = path + f"/logs/error.txt"
+    if "mnist" in file_path:
+        headers = ["steps", "err", "nfe"]
+    else:
+        headers = ["steps", "err", "nfe"]      
+
+    table = tabulate(data, tablefmt="grid", floatfmt=".3f") 
+    mode = "w" if first_write else "a"  
+    with open(file_path, mode) as f:
+        if first_write:
+            f.write("\t".join(headers) + "\n")  
+        f.write(table + "\n")
+
+def error_dataset(best_models):
+    steps = torch.arange(1,11)
+
+    for best_model in best_models:
+        total = len(steps)
+        first = True
+        start = time.time()
+        n = 0
+        dataset, training, _, _ = best_model.split('/')
+        print(f"\n\nerror {training} for {dataset}")
+        path = os.path.join(dataset, training)
+        x, y, odefunc = setup_model_and_data(dataset)
+        for step in steps:
+            data = error(best_model, x, y, odefunc, step)
+            data[0].insert(0, step)
+            save_error(path, data, step, first_write=first)
+            first = False
+
+            if dataset != 'mnist':
+                n += 1
+                elapsed_time = time.time()-start
+                estimated_time = ((elapsed_time)/n)*total
+                progress_bar(n, total, format_elapsed_time(elapsed_time), format_elapsed_time(estimated_time))
+                
+                del data
