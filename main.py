@@ -31,6 +31,7 @@ def main():
 
     ot = False
     if args.training_method=='otcfm':
+        training_method = f'otcfm{args.sigma}'
         ot = True
         
     if not args.only_test:
@@ -47,7 +48,7 @@ def main():
                     sigma=args.sigma,
                     ot=ot)
 
-        evaluate_models(os.path.join(args.dataset, args.training_method, 'models'))
+        evaluate_models(os.path.join(args.dataset, training_method, 'models'))
     
     else:
         print(f"\n\nTEST {args.dataset}")

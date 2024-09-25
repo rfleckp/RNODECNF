@@ -5,6 +5,8 @@ import numpy as np
 from models import NODE
 import matplotlib.pyplot as plt
 from test import setup_model_and_data
+from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 
 
 #TOY PLOTS
@@ -28,7 +30,7 @@ def toy_density_estimation1(model_path:str, seed:int = 3, samples:int =20000):
     os.makedirs(directory, exist_ok=True)
 
     x, y, odefunc = setup_model_and_data(dataset, seed, samples)
-    t=torch.linspace(1,0,4).type(torch.float32)
+    t=torch.linspace(1,0,5).type(torch.float32)
     x = x[0]
 
     odefunc.load_state_dict(torch.load(model_path, map_location=device))
@@ -37,14 +39,17 @@ def toy_density_estimation1(model_path:str, seed:int = 3, samples:int =20000):
     cont_NF = NODE(odefunc)
     flow = cont_NF(x, traj=True, t=t)
     limits = set_plot_limits(dataset)
+
+    cmap = plt.get_cmap('viridis_r')
+    norm = Normalize(vmin=0, vmax=1)
+    color = cmap(norm(0))
     
     with torch.no_grad():
-        fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+        fig, axes = plt.subplots(1, 5, figsize=(20, 4))
 
         for i, ax in enumerate(axes):
-            #ax.set_facecolor('black')
-            ax.scatter(flow[i,:,0], flow[i,:,1], color='royalblue', s=0.2, alpha=.05)
-            ax.set_title(f't = {t[i]:.2f}')
+            ax.scatter(flow[i,:,0], flow[i,:,1], color=color, s=0.2, alpha=.5)
+            #ax.set_title(f't = {t[i]:.2f}')
 
             ax.set_xlim(-limits, limits)  
             ax.set_ylim(-limits, limits)
@@ -80,19 +85,19 @@ def toy_density_estimation2(model_path: str, seed: int=3, steps: int=4, samples:
         fig, axes = plt.subplots(1, steps, figsize=((steps)*4*1.5, 4), dpi=300)
 
         for i, ax in enumerate(axes):
-            ax.set_facecolor('black')
+            ax.set_facecolor('white')
             ax.set_xticks([])
             ax.set_yticks([])          
 
-            sns.kdeplot(x=flow[i,:,0], y=flow[i,:,1], fill=True, thresh=0, levels=200, cmap='magma', ax=ax, clip=(limits,-limits), bw_adjust=.3)
-            ax.set_title(f't = {t[i]:.2f}')
+            sns.kdeplot(x=flow[i,:,0], y=flow[i,:,1], fill=True, thresh=0, levels=200, cmap='viridis', ax=ax, clip=(limits,-limits), bw_adjust=.1)
+            #ax.set_title(f't = {t[i]:.2f}')
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density2'))
         plt.close()
 
-from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize
+toy_density_estimation1('moons/rnode/models/100000_model.pt')
+
 def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset, training, _, name = model_path.split('/')
