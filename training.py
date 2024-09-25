@@ -167,7 +167,7 @@ def train_toy_cfm(target, params):
             elapsed_time = time.time() - start
             estimated_time = ((elapsed_time)/i)*params['n_batches']
             elapsed_time = format_elapsed_time(elapsed_time)
-            #progress_bar(i, params['n_batches'], elapsed_time, format_elapsed_time(estimated_time))
+            progress_bar(i, params['n_batches'], elapsed_time, format_elapsed_time(estimated_time))
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{i}_model.pt"))
             #print(f"\nbatch {i}, Loss: {batch_loss}\n")
             data = [[i, batch_loss, elapsed_time]]
@@ -318,7 +318,7 @@ def train_mnist_rnode(params):
             if i % 50 == 0:
                 torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
-                
+
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         """if epoch%5==0:
