@@ -8,12 +8,22 @@ def run_experiment(training_method, dataset, sigma):
         "--learning-rate", '1e-3',
         "--n-batches", '100_000',
         "--regularization", '.1',
-        "--sigma", sigma
+        "--sigma", f'{sigma}'
     ]
     
     print(f"Running: {cmd}")
-
-    subprocess.run(cmd)
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        print(f"Output:\n{result.stdout}")
+        if result.stderr:
+            print(f"Errors:\n{result.stderr}")
+    except subprocess.TimeoutExpired:
+        print(f"Command timed out: {cmd}")
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed with exit code {e.returncode}: {cmd}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == '__main__':
 
