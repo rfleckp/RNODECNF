@@ -220,7 +220,7 @@ def train_mnist_node(params):
             z1, l1 = z_t[-1], log_det[-1]
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
-            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True)  
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
             logpx = logpz + l1
             #print('logrpob and divergence: ', logpz.mean(), l1.mean())
             loss = - torch.sum(logpx) / z1.nelement() 
@@ -303,7 +303,7 @@ def train_mnist_rnode(params):
             #print(logp_x, regularization, kin_E1.mean(), n1.mean())
             #-1*0.5*torch.sum(z1.reshape(128,-1)**2,dim=1,keepdim=True)
             #loss = logp_x + regularization
-            loss = (-(logpz + log_det) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
             #print(loss)
 
             loss.backward()
@@ -315,9 +315,9 @@ def train_mnist_rnode(params):
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
-            '''if i % 50 == 0:
+            if i % 50 == 0:
                 torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))'''
+                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
