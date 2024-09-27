@@ -59,7 +59,6 @@ def toy_density_estimation1(model_path:str, seed:int = 3, samples:int =20000):
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density1'))
-        plt.close()
 
 
 import seaborn as sns
@@ -94,7 +93,6 @@ def toy_density_estimation2(model_path: str, seed: int=3, steps: int=4, samples:
 
         plt.tight_layout()
         plt.savefig(os.path.join(directory, f'{dataset}_density2'))
-        plt.close()
 
 
 def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
@@ -137,8 +135,6 @@ def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
     ax.set_yticks([])
 
     plt.savefig(os.path.join(directory, f'{dataset}_flow1'))
-    plt.close()
-
 
 def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -170,8 +166,6 @@ def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
     ax.set_yticks([])
 
     plt.savefig(os.path.join(directory, f'{dataset}_flow2'))
-    plt.close()
-
 
 #MNIST PLOTS
 
@@ -184,13 +178,13 @@ def generate_grid(model_path: str, seed: int=4):
     x, _, odefunc = setup_model_and_data(dataset, seed)
     x = x[0, :25, :, :]
 
-    t=torch.linspace(1,0,2).type(torch.float32)
+    t=torch.linspace(1,0,5).type(torch.float32)
 
     odefunc.load_state_dict(torch.load(model_path, map_location=device))
     odefunc.eval()
 
     cont_NF = NODE(odefunc)
-    images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t).detach().cpu().numpy()
+    images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t, odeint_method='rk4').detach().cpu().numpy()
 
     fig, axes = plt.subplots(5, 5, figsize=(10, 10))  
     axes = axes.flatten()  
@@ -202,7 +196,6 @@ def generate_grid(model_path: str, seed: int=4):
 
     plt.tight_layout()
     plt.savefig(os.path.join(directory, f'{dataset}_grid{name.split('_')[0]}'))
-    plt.close()
 
 
 def plot_mnist_flow(model_path: str, seed: int=4):
@@ -230,8 +223,7 @@ def plot_mnist_flow(model_path: str, seed: int=4):
 
     plt.tight_layout()
     plt.savefig(os.path.join(directory, f'{dataset}_flow{name.split('_')[0]}'))
-    plt.close()
-
+'''
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str) 
@@ -251,4 +243,4 @@ if __name__ == '__main__':
             toy_density_estimation2(args.model_path, samples=20_000)
         if args.flow:
             plot_toy_flow1(args.model_path, samples=3_000)
-            plot_toy_flow2(args.model_path, samples=1_000)
+            plot_toy_flow2(args.model_path, samples=1_000)'''
