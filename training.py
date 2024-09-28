@@ -175,7 +175,7 @@ def train_toy_cfm(target, params):
             first = False
             batch_loss = 0
 
-import matplotlib.pyplot as plt
+
 from plots import generate_grid
 def train_mnist_node(params):
     
@@ -218,15 +218,16 @@ def train_mnist_node(params):
                                             atol=1e-5,)
             
             z1, l1 = z_t[-1], log_det[-1]
+            loss = compute_bits_per_dim(z1, l1)
+            '''logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            logpx = logpz + l1
+            loss = - torch.sum(logpx) / z1.nelement() '''
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
-            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            logpx = logpz + l1
             #print('logrpob and divergence: ', logpz.mean(), l1.mean())
-            loss = - torch.sum(logpx) / z1.nelement() 
+            #loss = compute_bits_per_dim(z1, l1)
             #print(loss)
 
-            #loss = compute_bits_per_dim(z1, l1)
             loss.backward()
             optimizer.step()
             epoch_loss += loss
