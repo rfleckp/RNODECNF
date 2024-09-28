@@ -189,7 +189,7 @@ def train_mnist_node(params):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/node2"
+    path = "mnist/node"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
@@ -218,10 +218,10 @@ def train_mnist_node(params):
                                             atol=1e-5,)
             
             z1, l1 = z_t[-1], log_det[-1]
-            loss = compute_bits_per_dim(z1, l1)
-            '''logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
             logpx = logpz + l1
-            loss = - torch.sum(logpx) / z1.nelement() '''
+            #loss = - torch.sum(logpx) / z1.nelement() 
+            loss = - torch.mean(logpx)
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
             #print('logrpob and divergence: ', logpz.mean(), l1.mean())
@@ -265,7 +265,7 @@ def train_mnist_rnode(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode"
+    path = "mnist/rnode2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
