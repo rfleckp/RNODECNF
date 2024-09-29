@@ -265,7 +265,7 @@ def train_mnist_rnode(params):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode"
+    path = "mnist/rnode2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -295,17 +295,14 @@ def train_mnist_rnode(params):
                                             atol=1e-5,)
 
             z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
-            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            #print(z1.shape, initial_distr.log_prob(z1).shape, l1.shape, kin_E1.shape, n1.shape)
-            #logp_x = -1*0.5*torch.sum(z1**2,dim=1,keepdim=True) + l1 - params['lambda_k'] * kin_E1 - params['lambda_j'] * n1
-            #print(logpz.shape, l1.shape, kin_E1.shape, n1.shape)
-            #logp_x = compute_bits_per_dim(z1, l1)
-            #regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).mean()/784
-            #print(logp_x, regularization, kin_E1.mean(), n1.mean())
-            #-1*0.5*torch.sum(z1.reshape(128,-1)**2,dim=1,keepdim=True)
-            #loss = logp_x + regularization
-            loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
-            #print(loss)
+
+            logp_x = compute_bits_per_dim(z1, l1)
+            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            loss = logp_x + regularization
+
+            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            #loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+
 
             loss.backward()
             optimizer.step()

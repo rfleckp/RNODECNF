@@ -120,19 +120,21 @@ def plot_toy_flow1(model_path: str, samples: int=3000, seed: int=3):
         for i in range(samples):
             points = flow[:, i, :2]
             segments = np.array([points[j:j+2] for j in range(len(points)-1)])
-            lc = LineCollection(segments, cmap=cmap, norm=norm, linewidth=.1, zorder=1)
+            lc = LineCollection(segments, cmap=cmap, norm=norm, linewidth=.1, zorder=1, label="flow")
             lc.set_array(t[:-1].numpy())
             ax.add_collection(lc)
         #ax.set_facecolor('black')
         ax.scatter(flow[0, :, 0], flow[0, :, 1], color=last_color, s=.5, label="base", zorder=0)
         ax.scatter(flow[-1, :, 0], flow[-1, :, 1], color=first_color, s=.5, label="target", zorder=2)
 
-        handles, labels = plt.gca().get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))
-        plt.legend(by_label.values(), by_label.keys())
+        #handles, labels = plt.gca().get_legend_handles_labels()
+        #by_label = dict(zip(labels, handles))
+        #plt.legend(by_label.values(), by_label.keys())
 
     ax.set_xticks([])
     ax.set_yticks([])
+    #fig.patch.set_visible(False)
+    ax.axis('off')
 
     plt.savefig(os.path.join(directory, f'{dataset}_flow1'))
 
