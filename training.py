@@ -262,10 +262,10 @@ def train_mnist_rnode(params):
         starting_epoch = 0"""
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode2"
+    path = "mnist/rnode3"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -296,12 +296,12 @@ def train_mnist_rnode(params):
 
             z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
 
-            logp_x = compute_bits_per_dim(z1, l1)
-            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
-            loss = logp_x + regularization
+            #logp_x = compute_bits_per_dim(z1, l1)
+            #regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            #loss = logp_x + regularization
 
-            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            #loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
 
 
             loss.backward()
@@ -317,7 +317,7 @@ def train_mnist_rnode(params):
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
         print(f'finished epoch {epoch}')
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
-        scheduler.step()
+        #scheduler.step()
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)

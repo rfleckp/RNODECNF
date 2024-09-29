@@ -225,7 +225,7 @@ def plot_mnist_flow(model_path: str, seed: int=4):
 
     plt.tight_layout()
     plt.savefig(os.path.join(directory, f'{dataset}_flow{name.split('_')[0]}'))
-'''
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str) 
@@ -241,8 +241,8 @@ if __name__ == '__main__':
             plot_mnist_flow(os.path.join(args.model_path, i))
     else: 
         if args.density:
-            toy_density_estimation1(args.model_path, samples=200_000)
+            toy_density_estimation1(args.model_path, samples=20_000)
             toy_density_estimation2(args.model_path, samples=20_000)
         if args.flow:
             plot_toy_flow1(args.model_path, samples=3_000)
-            plot_toy_flow2(args.model_path, samples=1_000)'''
+            plot_toy_flow2(args.model_path, samples=1_000)
