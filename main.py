@@ -17,6 +17,7 @@ def main():
         choices=["moons", "gaussians", "spirals", "mnist", "checkerboard", "normal"])
     
     parser.add_argument("--n-batches", default = 10000, type=int)  
+    parser.add_argument("--batch-size", default = 64, type=int)  
     parser.add_argument("--n-epochs", default = 10, type=int)
     parser.add_argument("--learning-rate", default = 5e-4, type=float)  
     parser.add_argument("--odeint-method", default = 'rk4', type=str)    
@@ -39,7 +40,7 @@ def main():
         train_model(args.dataset, args.training_method, 
                     n_batches=args.n_batches, 
                     n_epochs=args.n_epochs,
-                    batch_size=256, 
+                    batch_size=args.batch_size, 
                     odeint_method=args.odeint_method,
                     learning_rate=args.learning_rate,
                     lambda_k=args.regularization,

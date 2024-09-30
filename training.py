@@ -265,7 +265,7 @@ def train_mnist_rnode(params):
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode3"
+    path = "mnist/rnode"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
 
@@ -315,7 +315,6 @@ def train_mnist_rnode(params):
             first = False
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-        print(f'finished epoch {epoch}')
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         #scheduler.step()
         """if epoch%5==0:
@@ -414,7 +413,7 @@ def train_model(dataset, training,
 
     if dataset == "mnist":
         params["n_epochs"] = n_epochs
-        params["batch_size"] = 128
+        params["batch_size"] = batch_size
 
         if training == "node":
             params["odeint_method"] = odeint_method
