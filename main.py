@@ -17,7 +17,7 @@ def main():
         choices=["moons", "gaussians", "spirals", "mnist", "checkerboard", "normal"])
     
     parser.add_argument("--n-batches", default = 10000, type=int)  
-    parser.add_argument("--batch-size", default = 64, type=int)  
+    parser.add_argument("--batch-size", default = 256, type=int)  
     parser.add_argument("--n-epochs", default = 10, type=int)
     parser.add_argument("--learning-rate", default = 5e-4, type=float)  
     parser.add_argument("--odeint-method", default = 'rk4', type=str)    
