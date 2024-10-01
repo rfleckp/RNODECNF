@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from test import setup_model_and_data
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
+from training_utils import choose_timesteps
 
 
 #TOY PLOTS
@@ -174,7 +175,7 @@ def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
 def unshift(x, nbits=8):
     return x.add_(-1/(2**(nbits+1)))
 
-def generate_grid(model_path: str, seed: int=4):
+def generate_grid(model_path: str, seed: int=4, odeint_method: str='rk4'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset, training, _, name = model_path.split('/')
     directory = os.path.join(dataset, training, 'plots')
@@ -182,13 +183,13 @@ def generate_grid(model_path: str, seed: int=4):
 
     odefunc = setup_model_and_data(dataset, seed)[2]
 
-    t=torch.linspace(1,0,5).type(torch.float32)
-
+    t=choose_timesteps(odeint_method)
+    
     odefunc.load_state_dict(torch.load(model_path, map_location=device))
     odefunc.eval()
 
     cont_NF = NODE(odefunc)
-    images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t, odeint_method='rk4').detach().cpu().numpy()
+    images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t, odeint_method=odeint_method).detach().cpu().numpy()
     #images = unshift(images).detach().cpu().numpy()
 
     fig, axes = plt.subplots(5, 5, figsize=(10, 10)) 

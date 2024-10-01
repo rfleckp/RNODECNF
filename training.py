@@ -246,8 +246,8 @@ def train_mnist_node(params):
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
             if i % 50 == 0:
-                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
-        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
+                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
         scheduler.step()
 
     del x0, t, z_t, log_det, loss    
@@ -326,7 +326,7 @@ def train_mnist_rnode(params):
             first = False
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
         #scheduler.step()
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
