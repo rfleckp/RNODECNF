@@ -503,7 +503,7 @@ def set_step_size(step_size, model):
 
     model.apply(_set)
 
-def create_model(regularization_fns, solver='rk4'):
+def create_model(regularization_fns=None, solver='rk4'):
     hidden_dims = tuple(map(int, "64,64,64".split(",")))
     strides = tuple(map(int, "1,1,1,1".split(",")))
 

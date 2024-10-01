@@ -56,7 +56,7 @@ def train_mnist_rnode(params):
     cvt = lambda x: x.type(torch.float32).to(device, non_blocking=True)
 
     regularization_fns, regularization_coeffs = create_regularization_fns()
-    model = create_model(regularization_fns).cuda()
+    model = create_model(regularization_fns).to(device)
     first = True
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
@@ -109,7 +109,7 @@ def train_mnist_rnode(params):
             first = False
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-        generated_samples, _, _ = model(fixed_z, reverse=True)
+        generated_samples, _, _ = model(cvt(torch.randn(25, *(1,28,28))), reverse=True)
         generated_samples = generated_samples.view(-1, *(1,28,28))
         nb = int(np.ceil(np.sqrt(float(fixed_z.size(0)))))
         fig_filename = os.path.join(path, 'plots')
@@ -126,27 +126,33 @@ def train_mnist_rnode(params):
 
 
 
-'''def train_mnist_cfm(params):
+def train_mnist_cfm(params):
 
     torch.manual_seed(params['seed'])
     np.random.seed(params['seed'])
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = UNet().to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    if params["optimal_transport"]:
-        FM = ExactOptimalTransportConditionalFlowMatcher(sigma=params['sigma'])
-        path = "mnist/otcfm"
-    else:
-        FM = ExactOptimalTransportConditionalFlowMatcher(sigma=params['sigma'], optimal_transport=False)
-        path = "mnist/cfm"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cvt = lambda x: x.type(torch.float32).to(device, non_blocking=True)
+    model = create_model().to(device)
+    first = True
+
+    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
 
+    path = "mnist/otcfm2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     first = True
     model.train()
-
+    fixed_z = cvt(torch.randn(25, *(1,28,28)))
+    t = cvt(torch.randn(25))
+    t = t.view(t.shape[0],1,1,1)
+    print(t.shape)
+    #print(model.transforms[0].chain[1].odefunc.diffeq(t, fixed_z).shape)
+    print(model.transforms[0])
+    #for idx in range(len(model.transforms)):
+            #print(idx, model.transforms[idx])
+    '''
     for epoch in range(1, params['n_epochs']+1):
         epoch_loss = 0.0
         progress_bar = enumerate(train_loader)
@@ -169,9 +175,7 @@ def train_mnist_rnode(params):
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
-            first = False
-        
-    del x0, samples, t, xt, ut, loss'''
+            first = False'''
 
 
 
@@ -181,8 +185,7 @@ def main(n_epochs = 100,
         learning_rate = 1e-3,
         lambda_k = .01,       
         lambda_j = .01,       
-        sigma = 0.001,
-        ot = True):         
+        sigma = 0.001):         
     """
     Parameters for Training
         dataset: ['moons', 'gaussians', 'circles', 'mnist']
@@ -222,10 +225,9 @@ def main(n_epochs = 100,
         params["lambda_j"] = lambda_j
         train_mnist_rnode(params)
 
-    '''else:
+    elif args.training_method == "otcfm":
         params["sigma"] = sigma
-        params["optimal_transport"] = ot
-        train_mnist_cfm(params)'''
+        train_mnist_cfm(params)
     
 
 if __name__ == "__main__":
