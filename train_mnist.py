@@ -12,6 +12,9 @@ from test import save_logs, format_elapsed_time
 from data import mnist_train_loader
 from plots import generate_grid
 
+from lib.layers.cnf import CNF
+from lib.layers.squeeze import SqueezeLayer
+
 def update_lr(optimizer, itr, rate):
     iter_frac = min(float(itr + 1) / max(1000, 1), 1.0)
     lr = rate * iter_frac
@@ -77,7 +80,6 @@ def train_mnist_rnode(params):
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
             update_lr(optimizer, itr, params['learning_rate'])
-            optimizer.zero_grad()
 
             # cast data and move to device+
             x = add_noise(cvt(samples), nbits=8)
@@ -137,6 +139,7 @@ def train_mnist_cfm(params):
     first = True
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
+    FM = ExactOptimalTransportConditionalFlowMatcher(sigma=params['sigma'])
     train_loader = mnist_train_loader(params["batch_size"])
 
     path = "mnist/otcfm2"
@@ -147,11 +150,26 @@ def train_mnist_cfm(params):
     fixed_z = cvt(torch.randn(25, *(1,28,28)))
     t = cvt(torch.randn(25))
     t = t.view(t.shape[0],1,1,1)
-    print(t.shape)
     #print(model.transforms[0].chain[1].odefunc.diffeq(t, fixed_z).shape)
-    print(model.transforms[0])
-    #for idx in range(len(model.transforms)):
-            #print(idx, model.transforms[idx])
+    #print(model.transforms[0].chain[0](fixed_z).shape)
+    print(model.transforms)
+
+    x = fixed_z
+    for idx in range(len(model.transforms)):
+            for idx2, layer in enumerate(model.transforms[idx].chain):
+                l_type = type(model.transforms[idx].chain[idx2])
+                if l_type == CNF:
+                    print('some cnf module', idx, idx2)
+                    x = model.transforms[idx].chain[idx2].odefunc.diffeq(t, x)
+                elif l_type == SqueezeLayer:
+                    print('squeze layer')
+                    x = model.transforms[idx].chain[idx2](x)[0]
+                else:
+                    print(model.transforms[idx].chain[idx2])
+                    x = model.transforms[idx].chain[idx2](x)
+
+                print(idx, idx2, x.shape)
+
     '''
     for epoch in range(1, params['n_epochs']+1):
         epoch_loss = 0.0
@@ -162,6 +180,7 @@ def train_mnist_cfm(params):
 
             x0 = torch.randn_like(samples).to(device)
             t, xt, ut = FM.sample_location_and_conditional_flow(samples.to(device), x0)
+            t = t.view(t.shape[0],1,1,1)
             vt = model(t, xt)
             loss = torch.mean((vt - ut) ** 2)
             loss.backward()

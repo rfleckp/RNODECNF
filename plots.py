@@ -189,7 +189,7 @@ def generate_grid(model_path: str, seed: int=4):
 
     cont_NF = NODE(odefunc)
     images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t, odeint_method='rk4')
-    images = unshift(images).detach().cpu().numpy()
+    #images = unshift(images).detach().cpu().numpy()
 
     fig, axes = plt.subplots(5, 5, figsize=(10, 10)) 
     axes = axes.flatten()  

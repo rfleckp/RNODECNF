@@ -175,6 +175,11 @@ def train_toy_cfm(target, params):
             first = False
             batch_loss = 0
 
+def update_lr(optimizer, itr, rate):
+    iter_frac = min(float(itr + 1) / max(1000, 1), 1.0)
+    lr = rate * iter_frac
+    for param_group in optimizer.param_groups:
+        param_group["lr"] = lr
 
 from plots import generate_grid
 def train_mnist_node(params):
@@ -192,6 +197,7 @@ def train_mnist_node(params):
     path = "mnist/node"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
+    itr = 0
     first = True
 
     model.train()
@@ -202,6 +208,7 @@ def train_mnist_node(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
+            update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -218,19 +225,20 @@ def train_mnist_node(params):
                                             atol=1e-5,)
             
             z1, l1 = z_t[-1], log_det[-1]
-            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            #logpx = logpz + l1
-            #loss = - torch.sum(logpx) / z1.nelement() 
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            logpx = logpz + l1
+            loss = - torch.sum(logpx) / z1.nelement() 
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
             #print('logrpob and divergence: ', logpz.mean(), l1.mean())
-            loss = compute_bits_per_dim(z1, l1)
+            #loss = compute_bits_per_dim(z1, l1)
             #print(loss)
 
             loss.backward()
             optimizer.step()
             epoch_loss += loss
             num += 1
+            itr += 1
 
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
@@ -268,6 +276,7 @@ def train_mnist_rnode(params):
     path = "mnist/rnode"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
+    itr = 0
 
     model.train()
 
@@ -277,6 +286,7 @@ def train_mnist_rnode(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
+            update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -296,18 +306,19 @@ def train_mnist_rnode(params):
 
             z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
 
-            logp_x = compute_bits_per_dim(z1, l1)
-            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
-            loss = logp_x + regularization
+            #logp_x = compute_bits_per_dim(z1, l1)
+            #regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            #loss = logp_x + regularization
 
-            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            #loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
 
 
             loss.backward()
             optimizer.step()
             epoch_loss += loss
             num += 1
+            itr += 1
 
             elapsed_time = format_elapsed_time(time.time()-start)
             data = [[epoch, epoch_loss/num, elapsed_time]]
