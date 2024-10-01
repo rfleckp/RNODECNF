@@ -51,11 +51,12 @@ class CNF(nn.Module):
         self.odefunc.before_odeint()
 
         if self.training:
-            #print('z before integration', z.mean())
             state_t = odeint(
                 self.odefunc,
                 (z, _logpz) + reg_states,
-                torch.linspace(0, 1, 5).type(torch.float32),
+                integration_times.to(z),
+                atol=[self.atol, self.atol] + [1e20] * len(reg_states) if self.solver in ['dopri5', 'bosh3'] else self.atol,
+                rtol=[self.rtol, self.rtol] + [1e20] * len(reg_states) if self.solver in ['dopri5', 'bosh3'] else self.rtol,
                 method=self.solver,
                 options=self.solver_options,
             )

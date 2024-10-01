@@ -494,7 +494,16 @@ def get_regularization(model, regularization_coeffs):
 
     return acc_reg_states
 
-def create_model(regularization_fns):
+def set_step_size(step_size, model):
+
+    def _set(module):
+        if isinstance(module, layers.CNF):
+            # Set training settings
+            module.solver_options['step_size'] = step_size
+
+    model.apply(_set)
+
+def create_model(regularization_fns, solver='rk4'):
     hidden_dims = tuple(map(int, "64,64,64".split(",")))
     strides = tuple(map(int, "1,1,1,1".split(",")))
 
@@ -509,7 +518,9 @@ def create_model(regularization_fns):
         layer_type="concat",
         zero_last=True,
         alpha=1e-6,
-        cnf_kwargs={"T": 1.0, "train_T": False, "regularization_fns": regularization_fns, "solver": 'rk4'},
+        cnf_kwargs={"T": 1.0, "train_T": False, "regularization_fns": regularization_fns, "solver": solver},
     )
+
+    set_step_size(0.25, model)
 
     return model
