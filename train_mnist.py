@@ -3,6 +3,7 @@ import time
 from models import create_model, create_regularization_fns
 import numpy as np
 import os
+import argparse
 
 import torch.optim as optim
 from training_utils import ExactOptimalTransportConditionalFlowMatcher, compute_bits_per_dim, standard_normal_logprob
@@ -61,7 +62,7 @@ def train_mnist_rnode(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    path = "mnist/rnode"
+    path = "mnist/rnode2"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     itr = 0
@@ -100,7 +101,6 @@ def train_mnist_rnode(params):
             loss.backward()
             #print('backward fulfilled')
             optimizer.step()
-            print('a full step')
             epoch_loss += loss
             num += 1
 
@@ -117,7 +117,6 @@ def train_mnist_rnode(params):
             os.makedirs(fig_filename, exist_ok=True)
             fig_filename = os.path.join(fig_filename, f'{epoch}-grid.png')
             save_image(unshift(generated_samples, nbits=8), fig_filename, nrow=nb)
-            print('even image saved')
 
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
@@ -177,15 +176,14 @@ def train_mnist_rnode(params):
 
 
 
-def main(training='rnode', 
-                n_epochs = 100,          
-                batch_size = 200,
-                odeint_method = 'rk4',
-                learning_rate = 1e-3,
-                lambda_k = .01,       
-                lambda_j = .01,       
-                sigma = 0.001,
-                ot = True):         
+def main(n_epochs = 100,          
+        batch_size = 200,
+        odeint_method = 'rk4',
+        learning_rate = 1e-3,
+        lambda_k = .01,       
+        lambda_j = .01,       
+        sigma = 0.001,
+        ot = True):         
     """
     Parameters for Training
         dataset: ['moons', 'gaussians', 'circles', 'mnist']
@@ -206,6 +204,10 @@ def main(training='rnode',
     CFM parameters
         sigma: variance of gaussian probability paths
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--training-method", default="rnode",
+                        choices=["rnode", "otcfm"])
+    args = parser.parse_args()
 
     params = {
         "seed": 22,
@@ -215,7 +217,7 @@ def main(training='rnode',
     params["n_epochs"] = n_epochs
     params["batch_size"] = batch_size
 
-    if training == "rnode":
+    if args.training == "rnode":
         params["odeint_method"] = odeint_method
         params["lambda_k"] = lambda_k
         params["lambda_j"] = lambda_j
