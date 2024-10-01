@@ -56,7 +56,7 @@ def train_mnist_rnode(params):
     cvt = lambda x: x.type(torch.float32).to(device, non_blocking=True)
 
     regularization_fns, regularization_coeffs = create_regularization_fns()
-    model = create_model(regularization_fns)
+    model = create_model(regularization_fns).cuda()
     first = True
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
