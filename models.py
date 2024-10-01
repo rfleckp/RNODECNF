@@ -301,7 +301,7 @@ class UNet(nn.Module):
                  attn_resolutions=(16,),
                  dropout=0.,
                  resamp_with_conv=True,
-                 act=Swish(),
+                 act=torch.nn.SELU(),
                  normalize=group_norm,
                  ):
         super().__init__()

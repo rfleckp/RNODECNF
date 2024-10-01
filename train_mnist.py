@@ -111,7 +111,7 @@ def train_mnist_rnode(params):
             first = False
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-        generated_samples, _, _ = model(cvt(torch.randn(25, *(1,28,28))), reverse=True)
+        generated_samples, _, _ = model(fixed_z, reverse=True)
         generated_samples = generated_samples.view(-1, *(1,28,28))
         nb = int(np.ceil(np.sqrt(float(fixed_z.size(0)))))
         fig_filename = os.path.join(path, 'plots')

@@ -190,7 +190,7 @@ def train_mnist_node(params):
     model = UNet().to(device)
 
     #optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
-    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=0)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
@@ -269,7 +269,7 @@ def train_mnist_rnode(params):
         print("start training from scratch")
         starting_epoch = 0"""
 
-    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
+    optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
