@@ -454,3 +454,62 @@ class UNet(nn.Module):
         assert list(h.size()) == [x.size(0), self.output_channels, x.size(2), x.size(3)]
         return h
    
+
+#from https://github.com/cfinlay/ffjord-rnode/tree/master
+import lib.odenvp as odenvp
+import lib.layers as layers
+import six
+import math
+import lib.layers.wrappers.cnf_regularization as reg_lib
+
+
+REGULARIZATION_FNS = {
+    "kinetic_energy": reg_lib.quadratic_cost,
+    "jacobian_norm2": reg_lib.jacobian_frobenius_regularization_fn,
+    }
+
+def create_regularization_fns():
+    regularization_fns = []
+    regularization_coeffs = []
+
+    for arg_key, reg_fn in six.iteritems(REGULARIZATION_FNS):
+        regularization_fns.append(reg_fn)
+        regularization_coeffs.append(0.01)
+
+    regularization_fns = tuple(regularization_fns)
+    regularization_coeffs = tuple(regularization_coeffs)
+    return regularization_fns, regularization_coeffs
+
+
+def get_regularization(model, regularization_coeffs):
+    if len(regularization_coeffs) == 0:
+        return None
+
+    acc_reg_states = tuple([0.] * len(regularization_coeffs))
+
+    for module in model.modules():
+        if isinstance(module, layers.CNF):
+            reg = module.get_regularization_states()
+            acc_reg_states = tuple(acc_reg_states[i] + reg[i] for i in range(len(reg)))
+
+    return acc_reg_states
+
+def create_model(regularization_fns):
+    hidden_dims = tuple(map(int, "64,64,64".split(",")))
+    strides = tuple(map(int, "1,1,1,1".split(",")))
+
+    model = odenvp.ODENVP(
+        (200, *(1, 28, 28)),
+        n_blocks=1,
+        intermediate_dims=hidden_dims,
+        div_samples=1,
+        strides=strides,
+        squeeze_first=False,
+        nonlinearity="softplus",
+        layer_type="concat",
+        zero_last=True,
+        alpha=1e-6,
+        cnf_kwargs={"T": 1.0, "train_T": False, "regularization_fns": regularization_fns, "solver": 'rk4'},
+    )
+
+    return model
