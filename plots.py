@@ -171,14 +171,16 @@ def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
 
 #MNIST PLOTS
 
+def unshift(x, nbits=8):
+    return x.add_(-1/(2**(nbits+1)))
+
 def generate_grid(model_path: str, seed: int=4):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset, training, _, name = model_path.split('/')
     directory = os.path.join(dataset, training, 'plots')
     os.makedirs(directory, exist_ok=True)
 
-    x, _, odefunc = setup_model_and_data(dataset, seed)
-    x = x[0, :25, :, :]
+    odefunc = setup_model_and_data(dataset, seed)[2]
 
     t=torch.linspace(1,0,5).type(torch.float32)
 
@@ -187,7 +189,8 @@ def generate_grid(model_path: str, seed: int=4):
 
     cont_NF = NODE(odefunc)
     images = cont_NF(torch.randn((25,1,28,28)), traj=False, t=t, odeint_method='rk4').detach().cpu().numpy()
-
+    images = unshift(images)
+    
     fig, axes = plt.subplots(5, 5, figsize=(10, 10))  
     axes = axes.flatten()  
 

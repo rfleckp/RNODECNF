@@ -218,13 +218,13 @@ def train_mnist_node(params):
                                             atol=1e-5,)
             
             z1, l1 = z_t[-1], log_det[-1]
-            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            logpx = logpz + l1
-            loss = - torch.sum(logpx) / z1.nelement() 
+            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            #logpx = logpz + l1
+            #loss = - torch.sum(logpx) / z1.nelement() 
             #print(z1[0,0])
             #print(standard_normal_logprob(z1)[0,0])
             #print('logrpob and divergence: ', logpz.mean(), l1.mean())
-            #loss = compute_bits_per_dim(z1, l1)
+            loss = compute_bits_per_dim(z1, l1)
             #print(loss)
 
             loss.backward()
@@ -296,12 +296,12 @@ def train_mnist_rnode(params):
 
             z1, l1, kin_E1, n1 = z_t[-1], log_det[-1].squeeze(), E_t[-1].squeeze(), n_t[-1].squeeze()
 
-            #logp_x = compute_bits_per_dim(z1, l1)
-            #regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
-            #loss = logp_x + regularization
+            logp_x = compute_bits_per_dim(z1, l1)
+            regularization = (params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            loss = logp_x + regularization
 
-            logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
-            loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
+            #logpz = standard_normal_logprob(z1).view(z1.shape[0], -1).sum(1, keepdim=True).squeeze()
+            #loss = (-(logpz + l1) + params['lambda_k'] * kin_E1 + params['lambda_j'] * n1).sum() / z1.nelement() 
 
 
             loss.backward()
