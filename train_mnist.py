@@ -217,7 +217,7 @@ def main(n_epochs = 100,
     params["n_epochs"] = n_epochs
     params["batch_size"] = batch_size
 
-    if args.training == "rnode":
+    if args.training_method == "rnode":
         params["odeint_method"] = odeint_method
         params["lambda_k"] = lambda_k
         params["lambda_j"] = lambda_j
