@@ -455,7 +455,7 @@ class UNet(nn.Module):
         return h
    
 
-#from https://github.com/cfinlay/ffjord-rnode/tree/master
+'''from https://github.com/cfinlay/ffjord-rnode'''
 import lib.odenvp as odenvp
 import lib.layers as layers
 import six
@@ -509,7 +509,7 @@ def create_model(regularization_fns, solver='rk4'):
 
     model = odenvp.ODENVP(
         (200, *(1, 28, 28)),
-        n_blocks=1,
+        n_blocks=2,
         intermediate_dims=hidden_dims,
         div_samples=1,
         strides=strides,

@@ -66,9 +66,8 @@ def train_mnist_rnode(params):
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     itr = 0
-    wall_clock = 0.
     model.train()
-    fixed_z = cvt(torch.randn(100, *(1,28,28)))
+    fixed_z = cvt(torch.randn(25, *(1,28,28)))
 
 
     for epoch in range(1, params['n_epochs']+1):
@@ -109,14 +108,14 @@ def train_mnist_rnode(params):
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
 
-            torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-            generated_samples, _, _ = model(fixed_z, reverse=True)
-            generated_samples = generated_samples.view(-1, *(1,28,28))
-            nb = int(np.ceil(np.sqrt(float(fixed_z.size(0)))))
-            fig_filename = os.path.join(path, 'plots')
-            os.makedirs(fig_filename, exist_ok=True)
-            fig_filename = os.path.join(fig_filename, f'{epoch}-grid.png')
-            save_image(unshift(generated_samples, nbits=8), fig_filename, nrow=nb)
+        torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
+        generated_samples, _, _ = model(fixed_z, reverse=True)
+        generated_samples = generated_samples.view(-1, *(1,28,28))
+        nb = int(np.ceil(np.sqrt(float(fixed_z.size(0)))))
+        fig_filename = os.path.join(path, 'plots')
+        os.makedirs(fig_filename, exist_ok=True)
+        fig_filename = os.path.join(fig_filename, f'{epoch}-grid.png')
+        save_image(unshift(generated_samples, nbits=8), fig_filename, nrow=nb)
 
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
