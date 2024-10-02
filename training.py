@@ -334,6 +334,7 @@ def train_mnist_rnode(params):
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
             if num % 50 == 0:
+                torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
