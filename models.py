@@ -37,8 +37,8 @@ class NODE(nn.Module):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         flow = odeint(self.odefunc, x.to(device), t.to(device), 
                               method=odeint_method,        
-                              atol=1e-10,
-                              rtol=1e-10,)
+                              atol=1e-5,
+                              rtol=1e-5,)
         if traj:
             return flow
         else:
