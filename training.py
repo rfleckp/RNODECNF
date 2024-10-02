@@ -191,7 +191,7 @@ def train_mnist_node(params):
 
     #optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=0)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
     path = "mnist/node"
@@ -248,7 +248,7 @@ def train_mnist_node(params):
             if i % 50 == 0:
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
-        scheduler.step()
+        #scheduler.step()
 
     del x0, t, z_t, log_det, loss    
 

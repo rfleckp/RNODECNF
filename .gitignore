@@ -10,12 +10,13 @@ gaussians
 moons
 spirals 
 data
-run.job
-run.job2
-run.job3
-rec_run_job.out
+copyrnode.out
 rnode.out
 otcfm.out
 node.out
 data_plots
 best_metrics.txt
+run.node
+run.rnode
+run.otcfm
+run.copyrnode
