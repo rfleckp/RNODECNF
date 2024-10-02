@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--regularization", default = 0.01, type=float)       
 
     parser.add_argument("--only-test", default = False, type=bool)
+    parser.add_argument("--path", default = None, type=str)
     args = parser.parse_args()
     #print('args parsed')
 
@@ -46,6 +47,7 @@ def main():
                     lambda_k=args.regularization,
                     lambda_j= args.regularization,
                     sigma=args.sigma,
+                    p = args.path,
                     ot=ot)
 
         evaluate_models(os.path.join(args.dataset, args.training_method, 'models'))
