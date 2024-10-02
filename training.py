@@ -189,9 +189,7 @@ def train_mnist_node(params):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = UNet().to(device)
 
-    #optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'])
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=0)
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
     path = "mnist/node"
@@ -208,7 +206,7 @@ def train_mnist_node(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
-            update_lr(optimizer, itr, params['learning_rate'])
+            #update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -248,7 +246,6 @@ def train_mnist_node(params):
             if i % 50 == 0:
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
-        #scheduler.step()
 
     del x0, t, z_t, log_det, loss    
 
@@ -270,7 +267,6 @@ def train_mnist_rnode(params):
         starting_epoch = 0"""
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     train_loader = mnist_train_loader(params["batch_size"])
 
     path = "mnist/rnode"
@@ -286,7 +282,7 @@ def train_mnist_rnode(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
-            update_lr(optimizer, itr, params['learning_rate'])
+            #update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -327,7 +323,7 @@ def train_mnist_rnode(params):
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
-        #scheduler.step()
+
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
             elapsed_time = format_elapsed_time(time.time()-start)
