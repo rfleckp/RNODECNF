@@ -27,6 +27,8 @@ def main():
 
     parser.add_argument("--only-test", default = False, type=bool)
     parser.add_argument("--path", default = None, type=str)
+    parser.add_argument("--activation", default = 'swish', type=str,
+                        choices=["swish", "selu", "softplus"])
     args = parser.parse_args()
     #print('args parsed')
 
@@ -47,7 +49,8 @@ def main():
                     lambda_k=args.regularization,
                     lambda_j= args.regularization,
                     sigma=args.sigma,
-                    p = args.path,
+                    p=args.path,
+                    act=args.activation,
                     ot=ot)
 
         evaluate_models(os.path.join(args.dataset, args.training_method, 'models'))

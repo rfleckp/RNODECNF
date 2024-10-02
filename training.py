@@ -7,7 +7,7 @@ from torchdiffeq import odeint_adjoint as odeint
 from training_utils import ExactOptimalTransportConditionalFlowMatcher, aug_ode, reg_aug_mnist, reg_aug_toy, choose_timesteps, compute_bits_per_dim, standard_normal_logprob
 from test import save_logs, format_elapsed_time, progress_bar
 from data import sampler, mnist_train_loader
-from models import MLP, UNet
+from models import MLP, UNet, Swish
 
 def train_toy_node(target, params):
     
@@ -187,7 +187,14 @@ def train_mnist_node(params):
     torch.manual_seed(params['seed'])
     np.random.seed(params['seed'])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = UNet().to(device)
+
+    if params['activation'] == 'swish':
+        activation = Swish()
+    elif params['activation'] == 'selu':
+        activation = torch.nn.SELU()
+    elif params['activation'] == 'softplus':
+        activation = torch.nn.Softplus()
+    model = UNet(act=activation).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
@@ -207,7 +214,8 @@ def train_mnist_node(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
-            #update_lr(optimizer, itr, params['learning_rate'])
+            if params['learning_rate'] == 1e-3:
+                update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -245,8 +253,8 @@ def train_mnist_node(params):
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
             if i % 50 == 0:
-                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
-        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
+                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
     del x0, t, z_t, log_det, loss    
 
@@ -255,18 +263,16 @@ def train_mnist_rnode(params):
     torch.manual_seed(params['seed'])
     np.random.seed(params['seed'])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = UNet().to(device)
+
+    if params['activation'] == 'swish':
+        activation = Swish()
+    elif params['activation'] == 'selu':
+        activation = torch.nn.SELU()
+    elif params['activation'] == 'softplus':
+        activation = torch.nn.Softplus()
+    model = UNet(act=activation).to(device)
+
     first = True
-
-    """try:
-        model.load_state_dict(torch.load('mnist/rnode/models/100_model.pt', map_location=device))
-        print('loaded model 100')
-        starting_epoch = 100
-        first = False
-    except:
-        print("start training from scratch")
-        starting_epoch = 0"""
-
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
 
@@ -284,7 +290,8 @@ def train_mnist_rnode(params):
         num = 0
         for i, (samples, labels) in progress_bar:
             optimizer.zero_grad()
-            #update_lr(optimizer, itr, params['learning_rate'])
+            if params['learning_rate'] == 1e-3:
+                update_lr(optimizer, itr, params['learning_rate'])
             #samples.requires_grad = True
 
             x0 = samples.to(device)
@@ -324,7 +331,7 @@ def train_mnist_rnode(params):
             first = False
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
-        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"), odeint_method=params['odeint_method'])
+        generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
         """if epoch%5==0:
             torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
@@ -394,6 +401,7 @@ def train_model(dataset, training,
                 lambda_j = .01,       
                 sigma = 0.001,
                 p = None,
+                act = 'swish',
                 ot = True):         
     """ 
     Parameters for Training
@@ -419,7 +427,8 @@ def train_model(dataset, training,
     params = {
         "seed": 22,
         "learning_rate": learning_rate,
-        "p": p
+        "p": p,
+        "activation": act,
     }    
 
     if dataset == "mnist":

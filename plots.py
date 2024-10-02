@@ -175,7 +175,7 @@ def plot_toy_flow2(model_path: str, samples: int=3000,  seed: int=3):
 def unshift(x, nbits=8):
     return x.add_(-1/(2**(nbits+1)))
 
-def generate_grid(model_path: str, seed: int=4, odeint_method: str='rk4'):
+def generate_grid(model_path: str, seed: int=4, odeint_method: str='dopri5'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset, training, _, name = model_path.split('/')
     directory = os.path.join(dataset, training, 'plots')
