@@ -199,8 +199,10 @@ def train_mnist_node(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], betas=(0.9, 0.999), weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    if params['p'] is not None:
+    if params['p'] != None:
         path = f"mnist/node{params['p']}"
+    else:
+        path = f"mnist/node"
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     itr = 0
@@ -276,8 +278,11 @@ def train_mnist_rnode(params):
     optimizer = optim.Adam(model.parameters(), lr=params['learning_rate'], weight_decay=0)
     train_loader = mnist_train_loader(params["batch_size"])
 
-    if params['p'] is not None:
-        path = f"mnist/node{params['p']}"
+    if params['p'] != None:
+        path = f"mnist/rnode{params['p']}"
+    else:
+        path = f"mnist/rnode"
+        
     os.makedirs(path + "/models", exist_ok=True)
     start = time.time()
     itr = 0
