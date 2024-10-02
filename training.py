@@ -253,7 +253,7 @@ def train_mnist_node(params):
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
-            if i % 50 == 0:
+            if num % 50 == 0:
                 generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
@@ -333,6 +333,8 @@ def train_mnist_rnode(params):
             data = [[epoch, epoch_loss/num, elapsed_time]]
             save_logs(path, data, train=True, params=params, first_write=first)
             first = False
+            if num % 50 == 0:
+                generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))
 
         torch.save(model.state_dict(), os.path.join(path + "/models", f"{epoch}_model.pt"))
         generate_grid(os.path.join(path + "/models", f"{epoch}_model.pt"))

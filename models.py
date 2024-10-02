@@ -298,7 +298,7 @@ class UNet(nn.Module):
                  output_channels=None,
                  ch_mult=(1, 2, 4),
                  num_res_blocks=2,
-                 attn_resolutions=(16,),
+                 attn_resolutions=(256,),
                  dropout=0.,
                  resamp_with_conv=True,
                  act=Swish(),
