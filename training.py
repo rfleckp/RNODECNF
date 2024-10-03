@@ -9,6 +9,12 @@ from test import save_logs, format_elapsed_time, progress_bar
 from data import sampler, mnist_train_loader
 from models import MLP, UNet, Swish
 
+def update_lr(optimizer, itr, rate):
+    iter_frac = min(float(itr + 1) / max(1000, 1), 1.0)
+    lr = rate * iter_frac
+    for param_group in optimizer.param_groups:
+        param_group["lr"] = lr
+
 def train_toy_node(target, params):
     
     torch.manual_seed(params['seed'])
@@ -29,6 +35,7 @@ def train_toy_node(target, params):
 
     for i in range(1, params['n_batches']+1):
         optimizer.zero_grad()
+        update_lr(optimizer, i, params['learning_rate'])
         x = target_distr(params['batch_size']).to(device)
         x.requires_grad = True
 
@@ -175,11 +182,6 @@ def train_toy_cfm(target, params):
             first = False
             batch_loss = 0
 
-def update_lr(optimizer, itr, rate):
-    iter_frac = min(float(itr + 1) / max(1000, 1), 1.0)
-    lr = rate * iter_frac
-    for param_group in optimizer.param_groups:
-        param_group["lr"] = lr
 
 from plots import generate_grid
 def train_mnist_node(params):
@@ -434,13 +436,13 @@ def train_model(dataset, training,
     params = {
         "seed": 22,
         "learning_rate": learning_rate,
-        "p": p,
-        "activation": act,
     }    
 
     if dataset == "mnist":
         params["n_epochs"] = n_epochs
         params["batch_size"] = batch_size
+        params["p"] = p
+        params["activation"] = act
 
         if training == "node":
             params["odeint_method"] = odeint_method
