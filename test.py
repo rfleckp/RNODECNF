@@ -8,64 +8,34 @@ from data import sampler, mnist_test_loader
 from models import MLP, UNet, NODE
 
 
-def flow_length(flow):
-    diff = flow[1:] - flow[:-1]
-    if diff.dim() == 3:
-        dist = torch.linalg.norm(diff, dim=-1)
-        straight = torch.linalg.norm(flow[-1]-flow[0], dim=1)
-    else:
-        dist = torch.linalg.norm(diff, dim=(-2,-1)).squeeze()
-        straight = torch.linalg.norm(flow[-1]-flow[0], dim=(-2,-1)).squeeze()
-    trajectory_length = dist.sum(dim=0)
-    return torch.mean(trajectory_length-straight)
-
-
-def flow_straightness(odefunc, flow):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    steps = flow.size(0)
-    t = torch.linspace(1, 0, steps).to(device)
-    straight_vec = torch.linalg.norm(flow[-1]-flow[0], dim=1)**2
-    norm = 0
-
-    with torch.no_grad():
-        for i in range(steps):
-            norm += torch.linalg.norm(odefunc(t[i], flow[i]), dim=1)**2
-        
-    return torch.mean(norm/steps-straight_vec)
+def flow_straightness(flow, energy):
+    straight_vec = torch.linalg.norm(flow[-1]-flow[0], dim=1)**2     
+    return torch.mean(energy-straight_vec)
 
 
 import torch.nn as nn
 from torchdiffeq import odeint as odeint
 class Path_Energy(nn.Module):
-    def __init__(self, ode_func: nn.Module, dataset: str):
+    def __init__(self, ode_func: nn.Module):
         super().__init__()
         self.odefunc = ode_func
         self.nfe = 0
-        if dataset == 'mnist':
-            self.mnist = True
-        else:
-            self.mnist = False
 
     def forward(self, t, states):
         z = states[0]                                           
         dz_dt = self.odefunc(t, z)
         self.nfe += 1
-        if self.mnist:
-            dE_dt = (torch.linalg.matrix_norm(dz_dt))**2
-        else:
-            dE_dt = (torch.linalg.vector_norm(dz_dt, dim=1, keepdims=True)**2)                       
+        dE_dt = (torch.linalg.vector_norm(dz_dt, dim=1, keepdims=True)**2)                       
 
         return (dz_dt, dE_dt)
 
-def normalized_path_energy(odefunc, x, dataset):
+
+def normalized_path_energy(odefunc, x):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #initial_values = (x, torch.zeros((x.size(0),1)).to(device))
-    if dataset == 'mnist':
-        E = torch.linalg.matrix_norm(odefunc(torch.tensor(0).to(device), x))
-    else:
-        E = torch.linalg.norm(odefunc(torch.tensor(0).to(device), x), dim=1)
-    initial_values = (x, E)
-    augmented_dynamics = Path_Energy(odefunc, dataset)
+    #E = torch.linalg.norm(odefunc(torch.tensor(0).to(device), x), dim=1)
+    initial_values = (x, torch.zeros((x.size(0),1)))
+    augmented_dynamics = Path_Energy(odefunc)
     flow, energy = odeint(augmented_dynamics, initial_values, 
                           t=torch.linspace(1,0,100).to(device), 
                           method='dopri5',
@@ -74,7 +44,7 @@ def normalized_path_energy(odefunc, x, dataset):
     w2d = wasserstein2(flow[0],flow[-1])**2
     E = torch.abs(energy[-1].mean())
     
-    return flow, torch.abs(E-w2d)/w2d, augmented_dynamics.nfe
+    return flow, torch.abs(E-w2d)/w2d, augmented_dynamics.nfe, torch.abs(energy[-1])
 
 
 def wasserstein2(x, y):
@@ -88,6 +58,32 @@ def wasserstein2(x, y):
     dist = pot.emd2(a, b, M.detach().cpu().numpy(), numItermax=int(1e7))
 
     return dist**.5
+
+def setup_model_and_data(dataset: str, seed: int=10, toy_samples: int=2000):
+    """
+    for MNIST: returns batched samples from the normal distribution matching the test-loader
+        
+
+    for TOY: returns 2000 unsqueezed samples from both the normal and target distribution
+        x[0], y[0][0] to access samples 2000x2
+            
+    """
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    if dataset == "mnist":
+        batch_size = 128
+        y = mnist_test_loader(batch_size=batch_size)
+        x = torch.randn((len(y), batch_size, 1, 28, 28))
+        odefunc = UNet().to(device)
+    else:
+        y = sampler(dataset)(toy_samples)
+        x = torch.randn_like(y).unsqueeze(0).to(device)
+        y = [(y.to(device), 0)]
+        odefunc = MLP().to(device)
+    
+    return x, y, odefunc
 
 
 def save_logs(path, data, train, first_write=False, params=None):
@@ -126,32 +122,6 @@ def format_elapsed_time(elapsed_seconds):
     formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
     return formatted_time
 
-def setup_model_and_data(dataset: str, seed: int=10, toy_samples: int=2000):
-    """
-    for MNIST: returns batched samples from the normal distribution matching the test-loader
-        
-
-    for TOY: returns 2000 unsqueezed samples from both the normal and target distribution
-        x[0], y[0][0] to access samples 2000x2
-            
-    """
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    if dataset == "mnist":
-        batch_size = 128
-        y = mnist_test_loader(batch_size=batch_size)
-        x = torch.randn((len(y), batch_size, 1, 28, 28))
-        odefunc = UNet().to(device)
-    else:
-        y = sampler(dataset)(toy_samples)
-        x = torch.randn_like(y).unsqueeze(0).to(device)
-        y = [(y.to(device), 0)]
-        odefunc = MLP().to(device)
-    
-    return x, y, odefunc
-
     
 def evaluate_model(path, x, y, odefunc, dataset):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -170,7 +140,7 @@ def evaluate_model(path, x, y, odefunc, dataset):
             flow, energy, fe = normalized_path_energy(odefunc, x_batched, dataset)
             path_energy += energy
             nfe += fe
-            length += flow_length(flow)
+            #length += flow_length(flow)
             #straight += flow_straightness(odefunc, flow)
             neg_log = cont_NF.log_likelihood(y_batched, 5)
             nll += neg_log
@@ -303,3 +273,85 @@ def error_dataset(best_models):
                 progress_bar(n, total, format_elapsed_time(elapsed_time), format_elapsed_time(estimated_time))
                 
                 del data
+
+def extract_nll(file_path):
+        nll = []
+        with open(file_path, 'r') as file:
+            for line in file:
+                columns = line.split('|')
+                if len(columns) > 1:
+                    batch_info = columns[1].strip()
+                    if batch_info:
+                        nll.append(float(columns[2].strip()))
+        return nll
+
+def evaluate_toy_model(path, samples):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    odefunc = MLP().to(device)
+    odefunc.load_state_dict(torch.load(path, map_location=device))
+    odefunc.eval()
+    x, y = samples
+    nll = 0
+    with torch.no_grad():
+        flow, npe, nfe, energy = normalized_path_energy(odefunc, x)
+        strs = flow_straightness(flow, energy)
+        w2d = wasserstein2(flow[-1], y)
+    del odefunc
+    return [[nll, w2d, npe, strs, nfe]]
+
+
+def evaluate_toys(directory: str, samples: int):
+    dataset, training, _ = directory.split('/')
+    print(f"\n\nTEST {training} for {dataset}")
+    path = os.path.join(dataset, training)
+    model_list = os.listdir(directory)
+
+    try:
+        model_list.remove('.DS_Store')
+    except:   
+        pass
+
+    sorted_files = sorted(model_list, key=extract_batch_number)
+    total = len(sorted_files)
+    first = True
+    start = time.time()
+    n = 0
+    nll = extract_nll(os.path.join(path, 'logs', 'test.txt'))
+
+    for model in sorted_files:
+        model_path = os.path.join(directory, model)
+        data = evaluate_toy_model(model_path, samples)
+        data[0].insert(0, model)
+        data[0][1] = nll[n]
+        save_logs(path, data, train=False, first_write=first)
+        first = False
+
+        n += 1
+        elapsed_time = time.time()-start
+        estimated_time = ((elapsed_time)/n)*total
+        progress_bar(n, total, format_elapsed_time(elapsed_time), format_elapsed_time(estimated_time))
+
+
+def evaluate_toy_dataset(dataset, n_samples):
+    samples = torch.randn((n_samples,2)), sampler(dataset)(n_samples)
+    training_methods = os.listdir(dataset)
+    try:
+        training_methods.remove('.DS_Store')
+    except:   
+        pass
+
+    for i in training_methods:
+        directory = os.path.join(dataset, i, 'models')
+        evaluate_toys(directory, samples)
+
+import argparse
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str)   
+    args = parser.parse_args()
+
+    evaluate_toy_dataset(args.dataset, 5000)
+
+
+if __name__ == "__main__":
+    main()

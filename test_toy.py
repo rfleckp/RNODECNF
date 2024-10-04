@@ -2,11 +2,9 @@ import subprocess
 
 def run_experiment(dataset):
     cmd = [
-        "python", "main.py", 
+        "python", "test.py", 
         "--dataset", dataset,
-        "--only-test", "True"
     ]
-    
     print(f"Running: {cmd}")
 
     subprocess.run(cmd)
