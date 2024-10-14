@@ -10,7 +10,7 @@ from models import MLP, UNet, NODE
 
 def flow_straightness(flow, energy):
     straight_vec = torch.linalg.norm(flow[-1]-flow[0], dim=1)**2     
-    return torch.mean(energy-straight_vec)
+    return torch.mean(energy-straight_vec)/straight_vec.mean()
 
 
 import torch.nn as nn
@@ -207,33 +207,24 @@ def evaluate_dataset(dataset):
         directory = os.path.join(dataset, i, 'models')
         evaluate_models(directory)
 
-def error(model_path, x, y, odefunc, steps):
+def error(model_path, x, steps):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    odefunc = MLP()
     odefunc.load_state_dict(torch.load(model_path, map_location=device))
     odefunc.eval()
 
     cont_NF = NODE(odefunc).to(device)
     t = torch.linspace(1, 0, steps+1).type(torch.float32)
-    c, err, nfe = 0, 0, 0
     with torch.no_grad():
-        for y_batched, _ in y:
-            x_batched = x[c].to(device)
-            y_batched = y_batched.to(device)
-            c += 1
-            if x_batched.shape[0] != y_batched.shape[0]:
-                x_batched = x_batched[:y_batched.shape[0]]
-                
-            y_dp = cont_NF(x_batched, t=t)
-            nfe += odefunc.nfe
-            odefunc.nfe = 0
-            y_rk = cont_NF(x_batched, t=t, odeint_method='rk4')     
-            error = torch.abs(y_dp - y_rk)
-            err += torch.mean(error)
+        y_dp = cont_NF(x, t=t)
+        nfe = odefunc.nfe
+        y_rk = cont_NF(x, t=t, odeint_method='rk4')
+        odefunc.nfe = 0     
+        error = torch.mean(torch.abs(y_dp - y_rk))
 
+    return [[steps, error, nfe]]
 
-    return [[err/c, nfe/c]]
-
-def save_error(path, data, step, first_write=False):
+def save_error(path, data, first_write=False):
     os.makedirs(path + "/logs", exist_ok=True)
     file_path = path + f"/logs/error.txt"
     if "mnist" in file_path:
@@ -241,15 +232,16 @@ def save_error(path, data, step, first_write=False):
     else:
         headers = ["steps", "err", "nfe"]      
 
-    table = tabulate(data, tablefmt="grid", floatfmt=".3f") 
+    table = tabulate(data, tablefmt="grid", floatfmt=".10f") 
     mode = "w" if first_write else "a"  
     with open(file_path, mode) as f:
         if first_write:
             f.write("\t".join(headers) + "\n")  
         f.write(table + "\n")
 
-def error_dataset(best_models):
+def error_dataset(best_models, n_samples):
     steps = torch.arange(1,11)
+    x = torch.randn((n_samples,2))
 
     for best_model in best_models:
         total = len(steps)
@@ -259,20 +251,14 @@ def error_dataset(best_models):
         dataset, training, _, _ = best_model.split('/')
         print(f"\n\nerror {training} for {dataset}")
         path = os.path.join(dataset, training)
-        x, y, odefunc = setup_model_and_data(dataset)
         for step in steps:
-            data = error(best_model, x, y, odefunc, step)
-            data[0].insert(0, step)
-            save_error(path, data, step, first_write=first)
+            data = error(best_model, x, step)
+            save_error(path, data, first_write=first)
             first = False
-
-            if dataset != 'mnist':
-                n += 1
-                elapsed_time = time.time()-start
-                estimated_time = ((elapsed_time)/n)*total
-                progress_bar(n, total, format_elapsed_time(elapsed_time), format_elapsed_time(estimated_time))
-                
-                del data
+            n += 1
+            elapsed_time = time.time()-start
+            estimated_time = ((elapsed_time)/n)*total
+            progress_bar(n, total, format_elapsed_time(elapsed_time), format_elapsed_time(estimated_time))
 
 def extract_nll(file_path):
         nll = []
@@ -290,13 +276,13 @@ def evaluate_toy_model(path, samples):
     odefunc = MLP().to(device)
     odefunc.load_state_dict(torch.load(path, map_location=device))
     odefunc.eval()
+    cont_NF = NODE(odefunc).to(device)
     x, y = samples
-    nll = 0
     with torch.no_grad():
         flow, npe, nfe, energy = normalized_path_energy(odefunc, x)
         strs = flow_straightness(flow, energy)
         w2d = wasserstein2(flow[-1], y)
-    del odefunc
+        nll = cont_NF.log_likelihood(y)
     return [[nll, w2d, npe, strs, nfe]]
 
 
@@ -316,13 +302,11 @@ def evaluate_toys(directory: str, samples: int):
     first = True
     start = time.time()
     n = 0
-    nll = extract_nll(os.path.join(path, 'logs', 'test.txt'))
 
     for model in sorted_files:
         model_path = os.path.join(directory, model)
         data = evaluate_toy_model(model_path, samples)
         data[0].insert(0, model)
-        data[0][1] = nll[n]
         save_logs(path, data, train=False, first_write=first)
         first = False
 
@@ -340,6 +324,7 @@ def evaluate_toy_dataset(dataset, n_samples):
     except:   
         pass
 
+    training_methods = ['node', 'rnode', 'cfm', 'otcfm']
     for i in training_methods:
         directory = os.path.join(dataset, i, 'models')
         evaluate_toys(directory, samples)
@@ -349,8 +334,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str)   
     args = parser.parse_args()
-
-    evaluate_toy_dataset(args.dataset, 5000)
+    if args.dataset:
+        evaluate_toy_dataset(args.dataset, 5000)
 
 
 if __name__ == "__main__":
